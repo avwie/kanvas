@@ -25,6 +25,12 @@ class IndexArray<T> {
         return entry.item
     }
 
+    fun getOrPut(index: Index, put: () -> T): T {
+        return get(index) ?: put().also {
+            insert(index, it)
+        }
+    }
+
     fun remove(index: Index): T? {
         if (index.index >= buffer.size) return null
         val entry = buffer.getOrNull(index.index)

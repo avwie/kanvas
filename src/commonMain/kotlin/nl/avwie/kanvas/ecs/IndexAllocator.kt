@@ -7,6 +7,10 @@ class IndexAllocator {
     private val free = ArrayDeque<Int>()
     private val entries = ArrayList<Entry>()
 
+    val indices get() = entries.mapIndexedNotNull { i, entry ->
+        if (entry.isLive) Index(i, entry.generation) else null
+    }
+
     fun allocate(): Index {
         val idx = free.removeFirstOrNull()
         return if (idx != null) {
