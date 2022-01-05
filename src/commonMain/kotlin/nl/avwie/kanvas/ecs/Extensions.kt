@@ -5,3 +5,6 @@ inline fun <reified T : Any> Backend.has(entity: Entity): Boolean = this.has(ent
 inline fun <reified T : Any> Backend.remove(entity: Entity): T? = this.remove(entity, T::class)
 inline fun <reified T : Any> Backend.getResource(): T? = this.getResource(T::class)
 inline fun <reified T : Any> Backend.removeResource(): T? = this.removeResource(T::class)
+
+fun <Q> Iterable<Pair<Index, Q>>.components(): Iterable<Q> = this.map { it.second }
+fun <Q> Iterable<Pair<Index, Q>>.indices(): Iterable<Index> = this.map { it.first }

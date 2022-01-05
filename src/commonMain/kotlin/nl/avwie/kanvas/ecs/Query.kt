@@ -6,6 +6,10 @@ interface Query<Q> {
     fun applies(componentTypes: Iterable<KClass<*>>): Boolean
     fun result(entity: Entity, backend: Backend): Q?
 
+    fun system(block: (data: Iterable<Pair<Index, Q>>) -> Unit): System<Q> {
+        return System { data -> block(data) }
+    }
+
     companion object {
         operator fun <T1 : Any> invoke(k1: KClass<T1>) = object : Query<Result1<T1>> {
             private val types = setOf(k1)

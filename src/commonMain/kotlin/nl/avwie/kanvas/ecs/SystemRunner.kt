@@ -2,6 +2,8 @@ package nl.avwie.kanvas.ecs
 
 interface SystemRunner {
     fun <Q> register(system: System<Q>, query: Query<Q>): Unregister
+    fun <Q> register(query: Query<Q>, block: (data: Iterable<Pair<Index, Q>>) -> Unit): Unregister = register(query.system(block), query)
+
     fun run()
 
     fun interface Unregister {
