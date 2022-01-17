@@ -1,18 +1,14 @@
 package nl.avwie.kanvas.ecs
 
-class SequentialSystemRunner(private val backend: Backend) : SystemRunner {
+class SequentialSystemRunner : SystemRunner {
+    private val systems = mutableListOf<System>()
 
-    private val systems = mutableListOf<SystemRunner.SystemAndQuery<*>>()
-
-    override fun <Q> register(system: System<Q>, query: Query<Q>): SystemRunner.Unregister {
-        val systemAndQuery = SystemRunner.SystemAndQuery(system, query)
-        systems.add(systemAndQuery)
-        return SystemRunner.Unregister { systems.remove(systemAndQuery) }
+    override fun register(system: System): SystemRunner.Unregister {
+        systems.add(system)
+        return SystemRunner.Unregister{ systems.remove(system) }
     }
 
-    override fun run() {
-        systems.forEach { systemAndQuery ->
-            systemAndQuery.run(backend)
-        }
+    override fun run(backend: Backend) {
+        systems.forEach { system -> system.run(backend) }
     }
 }

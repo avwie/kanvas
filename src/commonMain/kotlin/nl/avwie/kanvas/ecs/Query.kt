@@ -2,81 +2,46 @@ package nl.avwie.kanvas.ecs
 
 import kotlin.reflect.KClass
 
-interface Query<Q> {
-    fun applies(componentTypes: Iterable<KClass<*>>): Boolean
-    fun result(entity: Entity, backend: Backend): Q?
-
-    fun system(block: (data: Iterable<Pair<Index, Q>>) -> Unit): System<Q> {
-        return System { data -> block(data) }
-    }
+interface Query<R> {
+    operator fun invoke(backend: Backend): Iterable<R>
 
     companion object {
-        operator fun <T1 : Any> invoke(k1: KClass<T1>) = object : Query<Result1<T1>> {
-            private val types = setOf(k1)
-            override fun applies(componentTypes: Iterable<KClass<*>>): Boolean = types.all { componentTypes.contains(it) }
-            override fun result(entity: Entity, backend: Backend): Result1<T1>? {
-                val c1 = backend.get(entity, k1) ?: return null
-                return Result1(c1)
+
+        private fun Iterable<Entity>.fetch(backend: Backend, vararg ts: KClass<out Any>): Iterable<List<Any>> {
+            return this.map { entity ->
+                ts.map { k -> backend.get(entity, k)!! }
             }
         }
 
-        operator fun <T1 : Any, T2 : Any> invoke(k1: KClass<T1>, k2: KClass<T2>) =
-            object : Query<Result2<T1, T2>> {
-                private val types = setOf(k1, k2)
-                override fun applies(componentTypes: Iterable<KClass<*>>): Boolean =
-                    types.all { componentTypes.contains(it) }
+        @Suppress("UNCHECKED_CAST")
+        operator fun <T1 : Any> invoke(t1: KClass<T1>) = object : Query<Result1<T1>> {
+            override operator fun invoke(backend: Backend) = backend.filter(t1).fetch(backend, t1)
+                .map { (c1) -> Result1(c1 as T1) }
+        }
 
-                override fun result(entity: Entity, backend: Backend): Result2<T1, T2>? {
-                    val c1 = backend.get(entity, k1) ?: return null
-                    val c2 = backend.get(entity, k2) ?: return null
-                    return Result2(c1, c2)
-                }
-            }
+        @Suppress("UNCHECKED_CAST")
+        operator fun <T1 : Any, T2 : Any> invoke(t1: KClass<T1>, t2: KClass<T2>) = object : Query<Result2<T1, T2>> {
+            override operator fun invoke(backend: Backend) = backend.filter(t1, t2).fetch(backend, t1, t2)
+                .map { (c1, c2) -> Result2(c1 as T1, c2 as T2) }
+        }
 
-        operator fun <T1 : Any, T2 : Any, T3 : Any> invoke(k1: KClass<T1>, k2: KClass<T2>, k3: KClass<T3>) =
-            object : Query<Result3<T1, T2, T3>> {
-                private val types = setOf(k1, k2, k3)
-                override fun applies(componentTypes: Iterable<KClass<*>>): Boolean =
-                    types.all { componentTypes.contains(it) }
+        @Suppress("UNCHECKED_CAST")
+        operator fun <T1 : Any, T2 : Any, T3 : Any> invoke(t1: KClass<T1>, t2: KClass<T2>, t3: KClass<T3>) = object : Query<Result3<T1, T2, T3>> {
+            override operator fun invoke(backend: Backend) = backend.filter(t1, t2, t3).fetch(backend, t1, t2, t3)
+                .map { (c1, c2, c3) -> Result3(c1 as T1, c2 as T2, c3 as T3) }
+        }
 
-                override fun result(entity: Entity, backend: Backend): Result3<T1, T2, T3>? {
-                    val c1 = backend.get(entity, k1) ?: return null
-                    val c2 = backend.get(entity, k2) ?: return null
-                    val c3 = backend.get(entity, k3) ?: return null
-                    return Result3(c1, c2, c3)
-                }
-            }
+        @Suppress("UNCHECKED_CAST")
+        operator fun <T1 : Any, T2 : Any, T3 : Any, T4 : Any> invoke(t1: KClass<T1>, t2: KClass<T2>, t3: KClass<T3>, t4: KClass<T4>) = object : Query<Result4<T1, T2, T3, T4>> {
+            override operator fun invoke(backend: Backend) = backend.filter(t1, t2, t3, t4).fetch(backend, t1, t2, t3, t4)
+                .map { (c1, c2, c3, c4) -> Result4(c1 as T1, c2 as T2, c3 as T3, c4 as T4) }
+        }
 
-        operator fun <T1 : Any, T2 : Any, T3 : Any, T4: Any> invoke(k1: KClass<T1>, k2: KClass<T2>, k3: KClass<T3>, k4: KClass<T4>) =
-            object : Query<Result4<T1, T2, T3, T4>> {
-                private val types = setOf(k1, k2, k3, k4)
-                override fun applies(componentTypes: Iterable<KClass<*>>): Boolean =
-                    types.all { componentTypes.contains(it) }
-
-                override fun result(entity: Entity, backend: Backend): Result4<T1, T2, T3, T4>? {
-                    val c1 = backend.get(entity, k1) ?: return null
-                    val c2 = backend.get(entity, k2) ?: return null
-                    val c3 = backend.get(entity, k3) ?: return null
-                    val c4 = backend.get(entity, k4) ?: return null
-                    return Result4(c1, c2, c3, c4)
-                }
-            }
-
-        operator fun <T1 : Any, T2 : Any, T3 : Any, T4: Any, T5: Any> invoke(k1: KClass<T1>, k2: KClass<T2>, k3: KClass<T3>, k4: KClass<T4>, k5: KClass<T5>) =
-            object : Query<Result5<T1, T2, T3, T4, T5>> {
-                private val types = setOf(k1, k2, k3, k4, k5)
-                override fun applies(componentTypes: Iterable<KClass<*>>): Boolean =
-                    types.all { componentTypes.contains(it) }
-
-                override fun result(entity: Entity, backend: Backend): Result5<T1, T2, T3, T4, T5>? {
-                    val c1 = backend.get(entity, k1) ?: return null
-                    val c2 = backend.get(entity, k2) ?: return null
-                    val c3 = backend.get(entity, k3) ?: return null
-                    val c4 = backend.get(entity, k4) ?: return null
-                    val c5 = backend.get(entity, k5) ?: return null
-                    return Result5(c1, c2, c3, c4, c5)
-                }
-            }
+        @Suppress("UNCHECKED_CAST")
+        operator fun <T1 : Any, T2 : Any, T3 : Any, T4: Any, T5: Any> invoke(t1: KClass<T1>, t2: KClass<T2>, t3: KClass<T3>, t4: KClass<T4>, t5: KClass<T5>) = object : Query<Result5<T1, T2, T3, T4, T5>> {
+            override operator fun invoke(backend: Backend) = backend.filter(t1, t2, t3, t4, t5).fetch(backend, t1, t2, t3, t4, t5)
+                .map { (c1, c2, c3, c4, c5) -> Result5(c1 as T1, c2 as T2, c3 as T3, c4 as T4, c5 as T5) }
+        }
     }
 
     data class Result1<T1>(val c1: T1)
