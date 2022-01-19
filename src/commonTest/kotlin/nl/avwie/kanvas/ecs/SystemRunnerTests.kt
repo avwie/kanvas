@@ -11,13 +11,20 @@ class SystemRunnerTests {
         val ages = mutableSetOf<Int>()
 
         val ecs = ECS.default()
-        val query = Query(String::class, Int::class)
-        ecs.register {
-            query().forEach { (name, age) ->
+        val system = system {
+            query(String::class, Int::class).forEach { (name, age) ->
                 names.add(name)
                 ages.add(age)
             }
+            assertEquals(2, names.size)
+            assertEquals(2, ages.size)
+            assertEquals(setOf("Foo", "Baz"), names)
+            assertEquals(setOf(24, 42), ages)
+
+            val long = resource<Long>()!!
+            assertEquals(123456789L, long)
         }
+        ecs.register(system)
 
         val e1 = ecs.create()
         val e2 = ecs.create()
@@ -26,16 +33,10 @@ class SystemRunnerTests {
         ecs.set(e1, "Foo")
         ecs.set(e2, "Bar")
         ecs.set(e3, "Baz")
-
         ecs.set(e1, 42)
         ecs.set(e3, 24)
+        ecs.setResource(123456789L)
 
         ecs.run()
-
-        assertEquals(2, names.size)
-        assertEquals(2, ages.size)
-
-        assertEquals(setOf("Foo", "Baz"), names)
-        assertEquals(setOf(24, 42), ages)
     }
 }

@@ -7,12 +7,6 @@ interface Query<R> {
 
     companion object {
 
-        private fun Iterable<Entity>.fetch(backend: Backend, vararg ts: KClass<out Any>): Iterable<List<Any>> {
-            return this.map { entity ->
-                ts.map { k -> backend.get(entity, k)!! }
-            }
-        }
-
         @Suppress("UNCHECKED_CAST")
         operator fun <T1 : Any> invoke(t1: KClass<T1>) = object : Query<Result1<T1>> {
             override operator fun invoke(backend: Backend) = backend.filter(t1).fetch(backend, t1)

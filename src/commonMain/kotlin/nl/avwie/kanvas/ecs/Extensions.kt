@@ -8,13 +8,23 @@ inline fun <reified T : Any> Backend.remove(entity: Entity): T? = this.remove(en
 inline fun <reified T : Any> Backend.getResource(): T? = this.getResource(T::class)
 inline fun <reified T : Any> Backend.removeResource(): T? = this.removeResource(T::class)
 
-fun Backend.filter(vararg ks: KClass<out Any>): Iterable<Entity> = this.entities().filter { entity -> this.componentTypes(entity).let { cs -> ks.all { cs.contains(it) } } }
-
-data class SystemScope(val backend: Backend) {
-    operator fun <R> Query<R>.invoke(): Iterable<R> = this.invoke(backend)
+fun system(block: System.Scope.() -> Unit): System = object : System {
+    override fun run(backend: Backend) {
+        val scope = System.Scope(backend)
+        block(scope)
+    }
 }
 
-fun SystemRunner.register(block: SystemScope.() -> Unit): SystemRunner.Unregister {
+fun Backend.filter(vararg ks: KClass<out Any>): Iterable<Entity> = this.entities().filter { entity -> this.componentTypes(entity).let { cs -> ks.all { cs.contains(it) } } }
+fun Iterable<Entity>.fetch(backend: Backend, vararg ts: KClass<out Any>): Iterable<List<Any>> {
+    return this.map { entity ->
+        ts.map { k -> backend.get(entity, k)!! }
+    }
+}
+
+
+
+/*fun SystemRunner.register(block: SystemScope.() -> Unit): SystemRunner.Unregister {
     val system = object : System {
         override fun run(backend: Backend) {
             val scope = SystemScope(backend)
@@ -22,4 +32,4 @@ fun SystemRunner.register(block: SystemScope.() -> Unit): SystemRunner.Unregiste
         }
     }
     return this.register(system)
-}
+}*/
